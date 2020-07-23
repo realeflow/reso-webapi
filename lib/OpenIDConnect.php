@@ -7,8 +7,8 @@ use RESO\Util;
 
 class OpenIDConnect
 {
-    public static $validInputNamesUsername = array("username", "j_username", "user", "email");
-    public static $validInputNamesPassword = array("password", "j_password", "pass");
+    public static $validInputNamesUsername = [ "username", "j_username", "user", "email" ];
+    public static $validInputNamesPassword = [ "password", "j_password", "pass" ];
 
     /**
      * Autheticates user to the RESO API endpoint and returns authorization code.
@@ -31,12 +31,12 @@ class OpenIDConnect
         $curl = new \RESO\HttpClient\CurlClient();
 
         // Authentication request parameters
-        $params = array(
+        $params = [
             "client_id" => $client_id,
             "scope" => $scope,
             "redirect_uri" => $redirect_uri,
             "response_type" => "code"
-        );
+        ];
 
         // Request authentication
         $response = $curl->request("get", $api_auth_url, null, $params, false)[0];
@@ -81,7 +81,7 @@ class OpenIDConnect
                 $params["inputs"][$key] = $password;
             }
         }
-        $headers = array("Content-Type: application/x-www-form-urlencoded");
+        $headers = ["Content-Type: application/x-www-form-urlencoded"];
 
         // Request login
         $response_curl_info = $curl->request("post", $url, $headers, $params["inputs"], false)[3];
@@ -103,10 +103,11 @@ class OpenIDConnect
      * @param string $redirect_uri
      * @param string $auth_code
      * @param string $scope
+     * @param string $grant_type
      *
      * @return string Access token.
      */
-    public static function requestAccessToken($auth_code, $redirect_uri, $scope = "ODataApi")
+    public static function requestAccessToken($auth_code, $redirect_uri, $scope = "ODataApi", $grant_type = 'authorization_code')
     {
         \RESO\RESO::logMessage("Sending authorization request to retrieve access token.");
 
@@ -117,15 +118,16 @@ class OpenIDConnect
 
         $curl = new \RESO\HttpClient\CurlClient();
 
-        $headers = array(
+        $headers = [
             'Authorization: Basic '.base64_encode($client_id.":".$client_secret)
-        );
-        $params = array(
-            "grant_type" => "authorization_code",
+        ];
+        $params = [
+            "grant_type" => $grant_type,
             "client_id" => $client_id,
             "redirect_uri" => $redirect_uri,
-            "code" => $auth_code
-        );
+            "code" => $auth_code,
+            "scope" => $scope
+        ];
 
         $response = json_decode($curl->request("post", $api_token_url, $headers, $params, false)[0], true);
         if(!$response || !is_array($response) || !isset($response["access_token"]))
@@ -136,10 +138,11 @@ class OpenIDConnect
 
     /**
      * Retrieves new access token (refresh).
+     * @param string $grant_type
      *
      * @return string Refreshed access token.
      */
-    public static function requestRefreshToken()
+    public static function requestRefreshToken($grant_type = 'authorization_code')
     {
         \RESO\RESO::logMessage("Requesting refresh token.");
 
@@ -151,13 +154,14 @@ class OpenIDConnect
 
         $curl = new \RESO\HttpClient\CurlClient();
 
-        $headers = array(
+        $headers = [
             'Authorization: Basic '.base64_encode($client_id.":".$client_secret)
-        );
-        $params = array(
-            "grant_type" => "authorization_code",
+        ];
+
+        $params = [
+            "grant_type" => $grant_type,
             "refresh_token" => $access_token
-        );
+        ];
 
         $response = json_decode($curl->request("post", $api_token_url, $headers, $params, false)[0], true);
         if(!$response || !is_array($response) || !isset($response["refresh_token"]))
@@ -181,12 +185,12 @@ class OpenIDConnect
         $client_id = \RESO\RESO::getClientId();
 
         // Authentication request parameters
-        $params = array(
+        $params = [
             "client_id" => $client_id,
             "scope" => $scope,
             "redirect_uri" => $redirect_uri,
             "response_type" => "code"
-        );
+        ];
 
         return $api_auth_url . '?' . http_build_query($params);
     }

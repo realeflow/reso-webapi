@@ -7,7 +7,7 @@ use RESO\Util;
 
 abstract class Request
 {
-    private static $validOutputFormats = array("json", "xml");
+    private static $validOutputFormats = [ "json", "xml" ];
     private static $requestAcceptType = "";
 
     /**
@@ -16,11 +16,11 @@ abstract class Request
      * @param string $request
      * @param string $output_format
      * @param string $decode_json
-     * @param string $accept_format
+     * @param bool $compress_gzip
      *
      * @return mixed API Request response in requested data format.
      */
-    public static function request($request, $output_format = "xml", $decode_json = false)
+    public static function request($request, $output_format = "xml", $decode_json = false, bool $compress_gzip = false)
     {
         \RESO\RESO::logMessage("Sending request '".$request."' to RESO API.");
 
@@ -48,10 +48,14 @@ abstract class Request
         }
 
         // Set headers
-        $headers = array(
-            "Accept: ".$accept,
-            "Authorization: Bearer ".$token
-        );
+        $headers = [
+            "Accept: ". $accept,
+            "Authorization: Bearer ". $token
+        ];
+
+        if ($compress_gzip) {
+            $headers[] = 'Accept-Encoding: compress, gzip';
+        }
 
         // Send request
         $response = $curl->request("get", $url, $headers, null, false);
@@ -84,11 +88,11 @@ abstract class Request
      *
      * @param string $request
      * @param array $params
-     * @param string $accept_format
+     * @param bool $compress_gzip
      *
      * @return mixed API Request response.
      */
-    public static function requestPost($request, $params = array())
+    public static function requestPost($request, $params = array(), bool $compress_gzip = false)
     {
         \RESO\RESO::logMessage("Sending POST request '".$request."' to RESO API.");
 
@@ -108,10 +112,14 @@ abstract class Request
             $accept = "*/*";
         }
 
-        $headers = array(
-            "Accept: ".$accept,
-            "Authorization: Bearer ".$token
-        );
+        $headers = [
+            "Accept: ". $accept,
+            "Authorization: Bearer ". $token
+        ];
+
+        if ($compress_gzip) {
+            $headers[] = 'Accept-Encoding: compress, gzip';
+        }
 
         // Send request
         $response = $curl->request("post", $url, $headers, $params, false);
