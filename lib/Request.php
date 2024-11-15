@@ -20,7 +20,7 @@ abstract class Request
      *
      * @return mixed API Request response in requested data format.
      */
-    public static function request($request, $output_format = "xml", $decode_json = false, bool $compress_gzip = false)
+    public static function request($request, $output_format = "xml", $decode_json = false, bool $compress_gzip = false, int $maxpagesize = 0)
     {
         \RESO\RESO::logMessage("Sending request '".$request."' to RESO API.");
 
@@ -56,6 +56,23 @@ abstract class Request
         if ($compress_gzip) {
             $headers[] = 'Accept-Encoding: compress, gzip';
         }
+
+        if ($maxpagesize > 0) {
+            $headers[] = "prefer: 'maxpagesize=".$maxpagesize."'";
+        }
+
+        // Send request
+        echo "\n";
+        echo "INSIDE ORIGINAL MODULE....\n";
+        echo "\n";
+        echo $url; 
+        //echo " - ";
+        //echo $api_request_url;
+        echo "\n";
+        echo "\n";
+        //die("STOP HERE");
+
+        print_r($headers);
 
         // Send request
         $response = $curl->request("get", $url, $headers, null, false);
