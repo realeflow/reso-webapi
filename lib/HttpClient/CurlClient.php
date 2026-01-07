@@ -2,7 +2,6 @@
 
 namespace RESO\HttpClient;
 
-use RESO\Reso;
 use RESO\Error;
 use RESO\Util;
 
@@ -176,7 +175,7 @@ class CurlClient implements ClientInterface
         if($headers) {
             $opts[CURLOPT_HTTPHEADER] = $headers;
         }
-        if (!RESO::$verifySslCerts) {
+        if (!\RESO\RESO::getVerifySslCerts()) {
             $opts[CURLOPT_SSL_VERIFYHOST] = false;
             $opts[CURLOPT_SSL_VERIFYPEER] = false;
         }

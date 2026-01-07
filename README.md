@@ -6,7 +6,7 @@ Specific questions about this repository should be posted to the 'Issues' sectio
 
 ## Requirements
 
-PHP 5.3.3 and later.
+PHP 8.1 or later.
 
 ## Composer
 
@@ -58,8 +58,8 @@ $auth_code = RESO\OpenIDConnect::authorize('YOUR_USERNAME', 'YOUR_PASSWORD', 'ht
 RESO\RESO::setAccessToken(RESO\OpenIDConnect::requestAccessToken($auth_code, 'https://openid.reso.org/', 'ODataApi'));
 // Set the Accept header (if needed)
 RESO\Request::setAcceptType("json");
-// Retrieve top 10 properties from the RESO API endpoint
-$data = RESO\Request::request('Property?\$top=10', 'json', true);
+// Retrieve top 10 properties from the RESO API endpoint with extended timeout (optional)
+$data = RESO\Request::request('Property?\$top=10', 'json', true, false, 0, 180, 60);
 
 // Display records
 print_r($data);

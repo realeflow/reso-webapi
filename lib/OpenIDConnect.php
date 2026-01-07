@@ -20,7 +20,7 @@ class OpenIDConnect
      *
      * @return string Athorization code.
      */
-    public static function authorize($username, $password, $redirect_uri, $scope = "ODataApi")
+    public static function authorize($username, $password, $redirect_uri, $scope = "ODataApi", ?int $timeoutSeconds = null, ?int $connectTimeoutSeconds = null)
     {
         \RESO\RESO::logMessage("Initiating RESO API authorization.");
 
@@ -29,6 +29,12 @@ class OpenIDConnect
         $client_id = \RESO\RESO::getClientId();
 
         $curl = new \RESO\HttpClient\CurlClient();
+        if ($timeoutSeconds !== null) {
+            $curl->setTimeout($timeoutSeconds);
+        }
+        if ($connectTimeoutSeconds !== null) {
+            $curl->setConnectTimeout($connectTimeoutSeconds);
+        }
 
         // Authentication request parameters
         $params = [
@@ -107,7 +113,7 @@ class OpenIDConnect
      *
      * @return string Access token.
      */
-    public static function requestAccessToken($auth_code, $redirect_uri, $scope = "ODataApi", $grant_type = 'authorization_code')
+    public static function requestAccessToken($auth_code, $redirect_uri, $scope = "ODataApi", $grant_type = 'authorization_code', ?int $timeoutSeconds = null, ?int $connectTimeoutSeconds = null)
     {
         \RESO\RESO::logMessage("Sending authorization request to retrieve access token.");
 
@@ -117,6 +123,12 @@ class OpenIDConnect
         $client_secret = \RESO\RESO::getClientSecret();
 
         $curl = new \RESO\HttpClient\CurlClient();
+        if ($timeoutSeconds !== null) {
+            $curl->setTimeout($timeoutSeconds);
+        }
+        if ($connectTimeoutSeconds !== null) {
+            $curl->setConnectTimeout($connectTimeoutSeconds);
+        }
 
         $headers = [
             'Authorization: Basic '.base64_encode($client_id.":".$client_secret)
@@ -142,7 +154,7 @@ class OpenIDConnect
      *
      * @return string Refreshed access token.
      */
-    public static function requestRefreshToken($grant_type = 'authorization_code')
+    public static function requestRefreshToken($grant_type = 'authorization_code', ?int $timeoutSeconds = null, ?int $connectTimeoutSeconds = null)
     {
         \RESO\RESO::logMessage("Requesting refresh token.");
 
@@ -153,6 +165,12 @@ class OpenIDConnect
         $client_secret = \RESO\RESO::getClientSecret();
 
         $curl = new \RESO\HttpClient\CurlClient();
+        if ($timeoutSeconds !== null) {
+            $curl->setTimeout($timeoutSeconds);
+        }
+        if ($connectTimeoutSeconds !== null) {
+            $curl->setConnectTimeout($connectTimeoutSeconds);
+        }
 
         $headers = [
             'Authorization: Basic '.base64_encode($client_id.":".$client_secret)
