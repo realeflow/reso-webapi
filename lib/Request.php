@@ -7,7 +7,7 @@ use RESO\Util;
 
 abstract class Request
 {
-    private static $validOutputFormats = array("json", "xml");
+    private static $validOutputFormats = [ "json", "xml" ];
     private static $requestAcceptType = "";
 
     /**
@@ -16,11 +16,19 @@ abstract class Request
      * @param string $request
      * @param string $output_format
      * @param string $decode_json
-     * @param string $accept_format
+     * @param bool $compress_gzip
      *
      * @return mixed API Request response in requested data format.
      */
-    public static function request($request, $output_format = "xml", $decode_json = false)
+    public static function request(
+        $request,
+        $output_format = "xml",
+        $decode_json = false,
+        bool $compress_gzip = false,
+        int $maxpagesize = 0,
+        ?int $timeoutSeconds = null,
+        ?int $connectTimeoutSeconds = null
+    )
     {
         \RESO\RESO::logMessage("Sending request '".$request."' to RESO API.");
 
@@ -33,6 +41,12 @@ abstract class Request
         }
 
         $curl = new \RESO\HttpClient\CurlClient();
+        if ($timeoutSeconds !== null) {
+            $curl->setTimeout($timeoutSeconds);
+        }
+        if ($connectTimeoutSeconds !== null) {
+            $curl->setConnectTimeout($connectTimeoutSeconds);
+        }
 
         // Parse and validate request parameters
         $request = self::formatRequestParameters($request);
@@ -48,10 +62,31 @@ abstract class Request
         }
 
         // Set headers
-        $headers = array(
-            "Accept: ".$accept,
-            "Authorization: Bearer ".$token
-        );
+        $headers = [
+            "Accept: ". $accept,
+            "Authorization: Bearer ". $token
+        ];
+
+        if ($compress_gzip) {
+            $headers[] = 'Accept-Encoding: compress, gzip';
+        }
+
+        if ($maxpagesize > 0) {
+            $headers[] = "prefer: 'maxpagesize=".$maxpagesize."'";
+        }
+
+        // Send request (debug echos retained by request)
+        echo "\n";
+        echo "INSIDE ORIGINAL MODULE....\n";
+        echo "\n";
+        echo $url; 
+        //echo " - ";
+        //echo $api_request_url;
+        echo "\n";
+        echo "\n";
+        //die("STOP HERE");
+
+        print_r($headers);
 
         // Send request
         $response = $curl->request("get", $url, $headers, null, false);
@@ -68,7 +103,7 @@ abstract class Request
         $is_json = Util\Util::isJson($response[0]);
         if($is_json && $output_format == "json" && $decode_json) {
             $return = json_decode($response[0], true);
-            if(!is_array($response))
+            if(!is_array($return))
                 throw new Error\Api("Could not decode API response. Request URL: ".$api_request_url."; Request string: ".$request."; Response: ".$response[0]);
         } elseif($is_json && $output_format == "xml") {
             $return = Util\Util::arrayToXml(json_decode($response[0], true));
@@ -84,11 +119,11 @@ abstract class Request
      *
      * @param string $request
      * @param array $params
-     * @param string $accept_format
+     * @param bool $compress_gzip
      *
      * @return mixed API Request response.
      */
-    public static function requestPost($request, $params = array())
+    public static function requestPost($request, $params = array(), bool $compress_gzip = false, ?int $timeoutSeconds = null, ?int $connectTimeoutSeconds = null)
     {
         \RESO\RESO::logMessage("Sending POST request '".$request."' to RESO API.");
 
@@ -97,6 +132,12 @@ abstract class Request
         $token = \RESO\RESO::getAccessToken();
 
         $curl = new \RESO\HttpClient\CurlClient();
+        if ($timeoutSeconds !== null) {
+            $curl->setTimeout($timeoutSeconds);
+        }
+        if ($connectTimeoutSeconds !== null) {
+            $curl->setConnectTimeout($connectTimeoutSeconds);
+        }
 
         // Build request URL
         $url = rtrim($api_request_url, "/") . "/" . $request;
@@ -108,10 +149,14 @@ abstract class Request
             $accept = "*/*";
         }
 
-        $headers = array(
-            "Accept: ".$accept,
-            "Authorization: Bearer ".$token
-        );
+        $headers = [
+            "Accept: ". $accept,
+            "Authorization: Bearer ". $token
+        ];
+
+        if ($compress_gzip) {
+            $headers[] = 'Accept-Encoding: compress, gzip';
+        }
 
         // Send request
         $response = $curl->request("post", $url, $headers, $params, false);
@@ -145,7 +190,7 @@ abstract class Request
      *
      * @return True / false output saved to file.
      */
-    public static function requestToFile($file_name, $request, $output_format = "xml", $overwrite = false, $accept_format = "json") {
+    public static function requestToFile($file_name, $request, $output_format = "xml", $overwrite = false, $accept_format = "json", ?int $timeoutSeconds = null, ?int $connectTimeoutSeconds = null) {
         \RESO\RESO::logMessage("Sending request '".$request."' to RESO API and storing output to file '".$file_name."'.");
 
         if(!$overwrite && is_file($file_name)) {
@@ -153,10 +198,14 @@ abstract class Request
         }
 
         if(!is_dir(dirname($file_name))) {
-            throw new Error\Reso("Directory '".dir($file_name)."' does not exist.");
+            throw new Error\Reso("Directory '".dirname($file_name)."' does not exist.");
         }
 
-        $output_data = self::request($request, $output_format, false, $accept_format);
+        if ($accept_format) {
+            self::setAcceptType($accept_format);
+        }
+
+        $output_data = self::request($request, $output_format, false, false, 0, $timeoutSeconds, $connectTimeoutSeconds);
         if(!$output_data) {
             \RESO\RESO::logMessage("Request output save to file failed - empty or erroneous data.");
             return false;
@@ -177,9 +226,9 @@ abstract class Request
      *
      * @return Metadata request output.
      */
-    public static function requestMetadata() {
+    public static function requestMetadata(?int $timeoutSeconds = null, ?int $connectTimeoutSeconds = null) {
         \RESO\RESO::logMessage("Requesting resource metadata.");
-        return self::request("\$metadata");
+        return self::request("\$metadata", "xml", false, false, 0, $timeoutSeconds, $connectTimeoutSeconds);
     }
 
     /**

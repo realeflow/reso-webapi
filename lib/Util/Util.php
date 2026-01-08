@@ -40,7 +40,12 @@ abstract class Util
      * @return string Authentification code string.
      */
     public static function extractCode($url_string) {
-        return explode("=", parse_url($url_string)["query"])[1];
+        $query = parse_url($url_string, PHP_URL_QUERY);
+        if (!$query) {
+            return null;
+        }
+        parse_str($query, $params);
+        return $params['code'] ?? null;
     }
 
     /**
@@ -60,7 +65,11 @@ abstract class Util
 
         $doc = new \DOMDocument();
         @$doc->loadHTML($response_body);
-        $extract = json_decode(htmlspecialchars_decode($doc->getElementById("modelJson")->textContent), true);
+        $node = $doc->getElementById("modelJson");
+        if (!$node) {
+            throw new Error\Reso("Could not locate modelJson element in response body.");
+        }
+        $extract = json_decode(htmlspecialchars_decode($node->textContent), true);
         return $extract;
     }
 
@@ -73,11 +82,15 @@ abstract class Util
         $dom = new \DOMDocument();
         $returnArray = array();
         if(@$dom->loadHTML($response_body)) {
-            $form = $dom->getelementsbytagname('form')[0];
+            $forms = $dom->getElementsByTagName('form');
+            if ($forms->length === 0) {
+                return $returnArray;
+            }
+            $form = $forms->item(0);
             $returnArray["url"] = $form->getAttribute('action');
             $returnArray["method"] = $form->getAttribute('method');
             $returnArray["inputs"] = array();
-            $inputs = $dom->getelementsbytagname('input');
+            $inputs = $dom->getElementsByTagName('input');
             foreach ($inputs as $input) {
                 $returnArray["inputs"][$input->getAttribute('name')] = $input->getAttribute('value');
             }
