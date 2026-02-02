@@ -118,6 +118,9 @@ class CurlClient implements ClientInterface
 
         if(!$this->curl) {
             $this->curl = curl_init();
+        } else {
+            // Reset handle state when reusing to prevent option leakage between requests
+            curl_reset($this->curl);
         }
         $method = strtolower($method);
 

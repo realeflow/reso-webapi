@@ -40,7 +40,8 @@ abstract class Request
             $output_format = "json";
         }
 
-        $curl = new \RESO\HttpClient\CurlClient();
+        // Reuse singleton CurlClient to avoid file descriptor exhaustion
+        $curl = \RESO\HttpClient\CurlClient::instance();
         if ($timeoutSeconds !== null) {
             $curl->setTimeout($timeoutSeconds);
         }
@@ -79,7 +80,7 @@ abstract class Request
         echo "\n";
         echo "INSIDE ORIGINAL MODULE....\n";
         echo "\n";
-        echo $url; 
+        echo $url;
         //echo " - ";
         //echo $api_request_url;
         echo "\n";
@@ -131,7 +132,8 @@ abstract class Request
         $api_request_url = \RESO\RESO::getAPIRequestUrl();
         $token = \RESO\RESO::getAccessToken();
 
-        $curl = new \RESO\HttpClient\CurlClient();
+        // Reuse singleton CurlClient to avoid file descriptor exhaustion
+        $curl = \RESO\HttpClient\CurlClient::instance();
         if ($timeoutSeconds !== null) {
             $curl->setTimeout($timeoutSeconds);
         }
